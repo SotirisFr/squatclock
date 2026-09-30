@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0d12">
+  <meta name="description" content="An alarm clock that only stops when you do squats in front of the camera.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SquatClock">
+  <title>SquatClock</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="modulepreload" href="app.js">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+
+  <!-- ============ HOME ============ -->
+  <main id="home" class="screen active" aria-label="Alarms">
+    <header class="topbar">
+      <div class="brand">
+        <img src="icons/icon.svg" alt="" width="28" height="28">
+        <span>SquatClock</span>
+      </div>
+      <div class="stats" id="stats" title="Streak · total squats"></div>
+    </header>
+
+    <section class="hero">
+      <div class="clock" id="clock">--:--</div>
+      <div class="date" id="date"></div>
+      <div class="next" id="next-alarm">No alarms set</div>
+    </section>
+
+    <button class="banner" id="arm-banner" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>
+      <span><strong>Tap to arm alarms.</strong> Browsers block sound until you tap once.</span>
+    </button>
+
+    <section class="card setup" id="setup" hidden>
+      <h2>Before your first alarm</h2>
+      <p class="muted">Grant these now so nothing asks for permission while you're half asleep.</p>
+      <ul class="checks">
+        <li data-check="camera"><span class="dot"></span><span>Camera — to see your squats</span><button class="chip-btn" data-grant="camera">Allow</button></li>
+        <li data-check="notify"><span class="dot"></span><span>Notifications — in case the app is in the background</span><button class="chip-btn" data-grant="notify">Allow</button></li>
+        <li data-check="model"><span class="dot"></span><span>Body tracker — download for offline use</span><button class="chip-btn" data-grant="model">Download</button></li>
+      </ul>
+    </section>
+
+    <section class="alarms" aria-label="Alarm list">
+      <ul id="alarm-list"></ul>
+      <div class="empty" id="empty">
+        <p>No alarms yet.</p>
+        <p class="muted">Add one, then leave SquatClock open on your nightstand in Bedside mode.</p>
+      </div>
+    </section>
+
+    <nav class="actions">
+      <button class="btn ghost" id="test-btn">Try it now</button>
+      <button class="btn ghost" id="bedside-btn">Bedside mode</button>
+      <button class="fab" id="add-btn" aria-label="Add alarm">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+    </nav>
+  </main>
+
+  <!-- ============ BEDSIDE ============ -->
+  <section id="bedside" class="screen" aria-label="Bedside mode">
+    <div class="bedside-clock" id="bedside-clock">--:--</div>
+    <div class="bedside-next" id="bedside-next"></div>
+    <p class="bedside-hint">Keep this screen open and your phone plugged in.<br>Tap twice to exit.</p>
+  </section>
+
+  <!-- ============ RINGING / SQUAT ============ -->
+  <section id="ring" class="screen" aria-label="Alarm ringing">
+    <div class="stage">
+      <video id="cam" playsinline muted autoplay></video>
+      <canvas id="overlay"></canvas>
+      <div class="stage-shade"></div>
+    </div>
+
+    <header class="ring-top">
+      <div class="ring-time" id="ring-time">--:--</div>
+      <div class="ring-label" id="ring-label">Wake up</div>
+    </header>
+
+    <div class="ring-intro" id="ring-intro">
+      <div class="bell" aria-hidden="true">
+        <svg viewBox="0 0 64 64"><circle cx="32" cy="35" r="20"/><path d="M32 23v12l8 5M14 14l-6 6M50 14l6 6"/></svg>
+      </div>
+      <p class="ring-intro-text">Do <strong id="ring-target">10</strong> squats to turn it off</p>
+      <button class="btn primary big" id="start-squats">Start camera</button>
+      <p class="muted small" id="cam-error" hidden></p>
+    </div>
+
+    <div class="meter" id="meter" hidden aria-hidden="true">
+      <div class="meter-fill" id="meter-fill"></div>
+      <div class="meter-goal"></div>
+    </div>
+
+    <div class="counter" id="counter" hidden>
+      <svg class="ring-progress" viewBox="0 0 120 120" aria-hidden="true">
+        <circle class="track" cx="60" cy="60" r="52"/>
+        <circle class="bar" id="progress-bar" cx="60" cy="60" r="52"/>
+      </svg>
+      <div class="count"><span id="rep-count">0</span><small>/<span id="rep-target">10</span></small></div>
+    </div>
+
+    <div class="status" id="status" role="status" aria-live="polite">Loading body tracker…</div>
+
+    <button class="escape" id="escape">
+      <span class="escape-fill" id="escape-fill"></span>
+      <span class="escape-text">Can't squat? Hold for 10 s</span>
+    </button>
+  </section>
+
+  <!-- ============ DONE ============ -->
+  <section id="done" class="screen" aria-label="Alarm stopped">
+    <div class="done-inner">
+      <svg class="sun" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="12"/><path d="M32 6v8M32 50v8M6 32h8M50 32h8M13.6 13.6l5.7 5.7M44.7 44.7l5.7 5.7M13.6 50.4l5.7-5.7M44.7 19.3l5.7-5.7"/></svg>
+      <h1 id="done-title">Good morning</h1>
+      <p class="done-sub" id="done-sub"></p>
+      <div class="done-stats">
+        <div><strong id="done-streak">0</strong><span>day streak</span></div>
+        <div><strong id="done-total">0</strong><span>total squats</span></div>
+        <div><strong id="done-beaten">0</strong><span>alarms beaten</span></div>
+      </div>
+      <button class="btn primary big" id="done-btn">Done</button>
+    </div>
+  </section>
+
+  <!-- ============ EDITOR ============ -->
+  <dialog id="editor">
+    <form method="dialog" id="editor-form">
+      <header class="sheet-head">
+        <button type="button" class="link" id="cancel-edit">Cancel</button>
+        <h2 id="editor-title">New alarm</h2>
+        <button type="submit" class="link strong" value="save">Save</button>
+      </header>
+
+      <input type="time" id="f-time" class="time-input" required value="07:00" aria-label="Alarm time">
+
+      <label class="field">
+        <span>Label</span>
+        <input type="text" id="f-label" placeholder="Wake up" maxlength="40">
+      </label>
+
+      <fieldset class="field">
+        <legend>Repeat</legend>
+        <div class="days" id="f-days">
+          <button type="button" data-day="1">M</button>
+          <button type="button" data-day="2">T</button>
+          <button type="button" data-day="3">W</button>
+          <button type="button" data-day="4">T</button>
+          <button type="button" data-day="5">F</button>
+          <button type="button" data-day="6">S</button>
+          <button type="button" data-day="0">S</button>
+        </div>
+      </fieldset>
+
+      <div class="field row">
+        <span>Squats to stop</span>
+        <div class="stepper">
+          <button type="button" id="reps-dec" aria-label="Fewer squats">−</button>
+          <output id="f-reps">10</output>
+          <button type="button" id="reps-inc" aria-label="More squats">+</button>
+        </div>
+      </div>
+
+      <fieldset class="field">
+        <legend>Depth</legend>
+        <div class="segmented" id="f-difficulty">
+          <button type="button" data-level="easy">Easy</button>
+          <button type="button" data-level="normal">Normal</button>
+          <button type="button" data-level="deep">Deep</button>
+        </div>
+        <p class="muted small" id="difficulty-hint"></p>
+      </fieldset>
+
+      <div class="field row">
+        <label for="f-sound">Sound</label>
+        <div class="sound-pick">
+          <select id="f-sound"></select>
+          <button type="button" class="chip-btn" id="preview-sound">Play</button>
+        </div>
+      </div>
+
+      <button type="button" class="btn danger" id="delete-alarm">Delete alarm</button>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
