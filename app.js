@@ -129,20 +129,41 @@ function persist() {
   renderNext();
 }
 
+const DAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
 function renderList() {
   const ul = $('#alarm-list');
   ul.replaceChildren(...sortAlarms(alarms).map((a) => {
     const li = document.createElement('li');
     li.className = `alarm${a.enabled ? '' : ' off'}`;
-    const meta = [a.label || 'Alarm', describeDays(a.days), `${a.reps} squats`].join(' · ');
     li.innerHTML = `
-      <button class="alarm-main" aria-label="Edit alarm">
+      <button class="alarm-main">
+        <div class="alarm-label"></div>
         <div class="alarm-time"></div>
-        <div class="alarm-meta"></div>
+        <div class="alarm-meta">
+          <span class="alarm-days"></span>
+          <span class="alarm-reps"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 9l6-6 6 6M6 15l6 6 6-6"/></svg><span></span></span>
+        </div>
       </button>
       <label class="switch"><input type="checkbox" aria-label="Enabled"><span></span></label>`;
+    const days = describeDays(a.days);
+    li.querySelector('.alarm-main').setAttribute('aria-label', `Edit alarm ${a.time}, ${a.label || 'Alarm'}, ${days}, ${a.reps} squats`);
+    li.querySelector('.alarm-label').textContent = a.label || 'Alarm';
     li.querySelector('.alarm-time').textContent = a.time;
-    li.querySelector('.alarm-meta').textContent = meta;
+    const daysEl = li.querySelector('.alarm-days');
+    if (a.days.length) {
+      // Monday-first row of day letters, with the active days lit up.
+      daysEl.append(...[1, 2, 3, 4, 5, 6, 0].map((d) => {
+        const i = document.createElement('i');
+        i.textContent = DAY_LETTERS[d];
+        if (a.days.includes(d)) i.className = 'on';
+        return i;
+      }));
+    } else {
+      daysEl.textContent = days;
+      daysEl.classList.add('once');
+    }
+    li.querySelector('.alarm-reps > span').textContent = `${a.reps} squats`;
     const toggle = li.querySelector('input');
     toggle.checked = a.enabled;
     toggle.addEventListener('change', () => {
@@ -177,7 +198,18 @@ function renderNext() {
 
 function renderStats() {
   const s = loadStats();
-  $('#stats').textContent = s.alarmsBeaten ? `${s.streak}-day streak · ${s.totalSquats} squats` : '';
+  const el = $('#stats');
+  el.replaceChildren();
+  if (!s.alarmsBeaten) return;
+  el.innerHTML = `
+    <span class="stat streak"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22c4 0 7-2.7 7-7 0-3.5-2.4-6.2-4-8-.4 2-1.4 3.4-3 4 0-3.4-1.6-6.4-4-9 .3 3.3-1 5.6-2.5 7.6C4.3 11.4 5 13 5 15c0 4.3 3 7 7 7Z"/></svg><b></b></span>
+    <span class="stat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 9l6-6 6 6M6 15l6 6 6-6"/></svg><b></b></span>`;
+  const [streak, total] = el.querySelectorAll('.stat');
+  streak.querySelector('b').textContent = s.streak;
+  streak.title = `${s.streak}-day streak`;
+  total.querySelector('b').textContent = s.totalSquats;
+  total.title = `${s.totalSquats} squats in total`;
+  el.setAttribute('aria-label', `${s.streak}-day streak, ${s.totalSquats} squats`);
 }
 
 // ---------------------------------------------------------------- editor

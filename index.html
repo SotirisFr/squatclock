@@ -25,10 +25,11 @@
         <img src="icons/icon.svg" alt="" width="28" height="28">
         <span>SquatClock</span>
       </div>
-      <div class="stats" id="stats" title="Streak · total squats"></div>
+      <div class="stats" id="stats"></div>
     </header>
 
     <section class="hero">
+      <div class="hero-glow" aria-hidden="true"></div>
       <div class="clock" id="clock">--:--</div>
       <div class="date" id="date"></div>
       <div class="next" id="next-alarm">No alarms set</div>
@@ -37,29 +38,47 @@
     <button class="banner" id="arm-banner" hidden>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>
       <span><strong>Tap to arm alarms.</strong> Browsers block sound until you tap once.</span>
+      <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
     </button>
 
     <section class="card setup" id="setup" hidden>
       <h2>Before your first alarm</h2>
       <p class="muted">Grant these now so nothing asks for permission while you're half asleep.</p>
       <ul class="checks">
-        <li data-check="camera"><span class="dot"></span><span>Camera — to see your squats</span><button class="chip-btn" data-grant="camera">Allow</button></li>
-        <li data-check="notify"><span class="dot"></span><span>Notifications — in case the app is in the background</span><button class="chip-btn" data-grant="notify">Allow</button></li>
-        <li data-check="model"><span class="dot"></span><span>Body tracker — download for offline use</span><button class="chip-btn" data-grant="model">Download</button></li>
+        <li data-check="camera">
+          <span class="dot"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8a2 2 0 0 1 2-2h2l2-2h6l2 2h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><circle cx="12" cy="13" r="3.5"/></svg></span>
+          <span class="check-text"><strong>Camera</strong><small>To see your squats</small></span>
+          <button class="chip-btn" data-grant="camera">Allow</button>
+        </li>
+        <li data-check="notify">
+          <span class="dot"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4Z"/><path d="M10 21h4"/></svg></span>
+          <span class="check-text"><strong>Notifications</strong><small>In case the app is in the background</small></span>
+          <button class="chip-btn" data-grant="notify">Allow</button>
+        </li>
+        <li data-check="model">
+          <span class="dot"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></span>
+          <span class="check-text"><strong>Body tracker</strong><small>Download once for offline use</small></span>
+          <button class="chip-btn" data-grant="model">Download</button>
+        </li>
       </ul>
     </section>
 
     <section class="alarms" aria-label="Alarm list">
       <ul id="alarm-list"></ul>
       <div class="empty" id="empty">
+        <svg class="empty-icon" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="35" r="20"/><path d="M32 23v12l8 5M14 14l-6 6M50 14l6 6"/></svg>
         <p>No alarms yet.</p>
         <p class="muted">Add one, then leave SquatClock open on your nightstand in Bedside mode.</p>
       </div>
     </section>
 
     <nav class="actions">
-      <button class="btn ghost" id="test-btn">Try it now</button>
-      <button class="btn ghost" id="bedside-btn">Bedside mode</button>
+      <button class="btn ghost" id="test-btn">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10-6.5Z"/></svg>Try it now
+      </button>
+      <button class="btn ghost" id="bedside-btn">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/></svg>Bedside
+      </button>
       <button class="fab" id="add-btn" aria-label="Add alarm">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
       </button>
@@ -96,12 +115,13 @@
     </div>
 
     <div class="meter" id="meter" hidden aria-hidden="true">
-      <div class="meter-fill" id="meter-fill"></div>
+      <div class="meter-track"><div class="meter-fill" id="meter-fill"></div></div>
       <div class="meter-goal"></div>
     </div>
 
     <div class="counter" id="counter" hidden>
       <svg class="ring-progress" viewBox="0 0 120 120" aria-hidden="true">
+        <defs><linearGradient id="progress-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb020"/><stop offset="1" stop-color="#ff3d5a"/></linearGradient></defs>
         <circle class="track" cx="60" cy="60" r="52"/>
         <circle class="bar" id="progress-bar" cx="60" cy="60" r="52"/>
       </svg>
@@ -112,7 +132,7 @@
 
     <button class="escape" id="escape">
       <span class="escape-fill" id="escape-fill"></span>
-      <span class="escape-text">Can't squat? Hold for 10 s</span>
+      <span class="escape-text">Can't squat? Hold for 10&nbsp;s</span>
     </button>
   </section>
 
@@ -134,6 +154,7 @@
   <!-- ============ EDITOR ============ -->
   <dialog id="editor">
     <form method="dialog" id="editor-form">
+      <div class="grabber" aria-hidden="true"></div>
       <header class="sheet-head">
         <button type="button" class="link" id="cancel-edit">Cancel</button>
         <h2 id="editor-title">New alarm</h2>

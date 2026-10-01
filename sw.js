@@ -1,7 +1,7 @@
 // Offline support: the app shell plus the MediaPipe runtime and pose model are
 // cached so the alarm still works at 7am with no network.
 
-const VERSION = 'v1';
+const VERSION = 'v2';
 const SHELL_CACHE = `squatclock-shell-${VERSION}`;
 const RUNTIME_CACHE = 'squatclock-runtime';
 
